@@ -1,0 +1,132 @@
+#Copyright 2022-2023 Tunsoiu Dan-Andrei 315CA
+Load_balancer.c:
+
+	Mai intai avem declarate 2 structuri pe care o sa le enumar mai jos:
+	-structura server va contine toate datele necesare replicii unui server,
+id-ul serverului al carui este replica, hash-ul replici, numarul replici care
+poate fi 0, 1 sau 2 si un pointer la memoria serverului al carui replica este.
+	-load_balancer va contine un vector de pointeri de tipul structurii ser-
+ver, apoi va avea o variabila in care va retine dimensiunea acestui vector, si
+inca una in care va retine cate spatii din vector sunt ocupate.
+	
+	Apoi o sa avem funcita init_load_balancer care va creea o structura de
+tipul load_balancer, va aloca vectorul de pointeri de servere cu dimenisunea 10,
+si o sa il faca pe size 0 pentru ca deocamdata nu o sa avem nicun server in a-
+cesta. Dupa care va returna un pointer la structura creeata.
+
+	Functia loader_add_server va primi ca parametri un pointer la o structu-
+ra de tipul load_balancer pe care o sa o numim main, si o sa mai primeasca si
+id-ul serverului pe care vrem sa il adaugam. Apoi o sa initializam memoria ser-
+verului pe care vrem sa il adaugam. Dupa aceea o sa avem un for cu 3 iterati, 
+una pentru fiecare replica a serverului, in care mai intai o sa creeam replica
+si o sa ii calculam hashul, dupa care o sa spunem ca memoria replici serverului
+este memoria alocata inaintea forului, dupa care, pentru ca tinem tot timpul
+vectorul de replici sortat crescatator dupa hash-ul acestora, o sa utilizam ca-
+utare binara pentru a afla pozitia in care trebuie introdus noul server. Dupa
+ce am adaugat noua replica in vector trebuie sa verificam ce obiecte de pe suc-
+cesorul acesteia din vector, pentru care o sa avem trei caazuri:
+	-daca noua replica adaugata se gaseste la o pozitie diferita de prima
+sau ultima din vector atunci o sa apelam functia server_move (prezenta in ser-
+ver.c) cu replica succesoare celei noi adaugate, replica adaugata si hashul
+replici predecesoare celei adaugate si hashul replici adaugate.
+	-daca replica nou adaugata este pe ultima pozitie din vector atunci o sa
+apelam functia server_move cu prima replica din server, replica noua adaugata,
+hashul replici predecesoare celei noi adaugate si hashul replici adaugate
+	-daca replica nou adaugata este pe prima pozitie din vector atunci o sa
+apelam functia server_move_first (prezenta in server.c) cu serverul succesor
+celui nou adaugat, serverul nou adaugat , hashul ultimului server din vector si
+hashul serverului nou adaugat.
+	Dupa ce am mutat si obiectele dupa cum este necesar se termina forul si
+functia. Este important de notat ca inainte de adaugarea replici in vector, daca
+vectorul nu are suficeint spatiu, atunci o sa realocam vectorul cu o dimensiune
+dubla.
+
+	Functia loader_remove_server o sa primeasca aceeasi parametri ca functia
+loader_add_server. Asemanator functiei mentionate anterior, o sa avem un for cu
+3 iterati pentru a sterge fiecare replica a serverului cu id-ul dat din vectorul
+nostru. Mai intai o sa calculam hashul replici pe care vrem sa o eliminam, apoi
+o sa ii gasim pozitia in vector cu ajutorul cautarii binare, dupa care in func-
+tie de pozitia acestuia, asemanator functiei anterioare, o sa mutam obiectele
+care trebuie mutate de pe server pe un alt server valabil.Dupa care daca am eli-
+minat ultima replica a serverului o sa ii eliberam memoria si apoi daca numarul
+de servere ramase in vector este mai mica sau egal cu jumatate din sizeul vec-
+torului atunci o sa il realocam la jumatate din dimensiunea actoala pentru a 
+salva memorie.
+
+	Functia loader_store doar o sa caute in functie de hashul key obiectului
+dat, serverul pe care acesta va trebui sa fie stocat si o sa apeleze functia
+server_store (funcite din server.c)  cu serverul gasit si obiectul pe care vrem
+sa il adaugam.
+
+	Loader_retrieve eset aproape identica doar ca se va apela functia server
+_retrieve (functie din server.c), in loc de server_store.
+
+	Funcita free_load_balancer va parcurge vectorul de servere din load_ba-
+lancer si va elibera replicile pe rand din acestea, daca replica respectiva este
+prima replica a unui server atunci va elibera si memoria asociata serverului.
+La final se va elibera vectorul de servere si load_balancerul.
+
+
+Sever.c:
+
+	Server.c contine si el cateva structuri:
+	-mai intai o sa avem structurile de nod si de lista din laboratorul de
+liste de la SDA.
+	-apoi o sa avem structura de produs care o sa contina trei variabile:key
+, care va fi cheia produsului, value, care o sa fie numele produsului si hash-
+_key care va retine hashul cheii, care o sa ne trebuiasca mai tarziu.
+	-structura server_memory o sa fie un hashtabel pe care o sa il retinem 
+in listaprodus, si o sa avem si numarul de bucketuri ale hashtabelului in varia-
+bila size.
+
+	Dupa aceea o sa avem functile de lucru cu liste din laboratorul de liste
+de la SDA.
+
+	Urmatoarea functie prezenta este init_server_memory care va creea si i-
+nitializa o structura de tipul server_memory in interiorul careia vom creea si
+un hashtabel. Dupa care vom returna un pointer la structura server_memory cre-
+eata.
+
+	Urmatoarea functie este server_store care va avea rolul de ht_put din
+laboratorul de hashtabeluri, adica va adauga elementul primit in hashtabelul
+primit ca parametru.
+
+	Functia server_retrieve gasete elementul cu cheia data din hashtabelul
+primit ca parametru si il returneaza.
+
+	Functia server_move o sa primeasca patru parametri, hashtabelul de pe
+care trebuie mutate elementele, hashtabelul pe care trebuie mutate elementele, 
+si apoi intre care doua hashuri trebuie sa se afle. Functia o sa functioneze in
+felul urmator:
+	-O sa parcurg fiecare bucket din primul hashtabel cu ajutorul unui for.
+	-O sa am o variabila nod in care o sa retin headul bucketului la care
+ma aflu actual.
+	-Daca nod este null inseamna ca bucketul e gol si o sa trec la urmatorul
+bucket.
+	-Daca e difetrit de null o sa intru mai inati intr-o bucla in care o sa
+verific daca nod trebuie mutat de pe hashtabelul curent, caz in care o sa mut
+nod de pe primul hashtabel in al doilea hashtabel in bucketul cu acelasi numar
+ca bucketul in care ma flam curent, pentru ca toate hashtabelurile contin acela-
+si numar de bucketuri, si atunci inseamna ca noul head al bucketului in care
+eram initial va deveni nod->next si apoi nod o sa fie egal cu noul head. Daca
+nod nu trebuia mutat atunci o sa ies din bucla si o sa zic ca nod contine este
+elementul predecesor elementului pe care o sa il mut si atunci o sa am un alt 
+while in care o sa verific ca nod are un succesor.
+	-Dupa ce am intart in al doilea while o sa verific daca nod de next tre-
+buie mutat si o sa il mut in functie de rezultatul acestei intrebari, iar apoi
+nod o sa fie egal cu succesorul sau.
+
+	Server_move_first este aproape identica cu functia anterioara, doar ca
+hashul obiectelor pe care o sa trebuiasca sa le mut nu o sa trebuiasca sa fie
+intre addr1 si addr2 care sunt primiti ca parametri, el o sa trebuiasca sa fie
+ori mai mic ca addr1, ori mai mare ca addr2, acesta fiind un caz special in care
+vreau sa mut elemntele de pe replica aflata pe prima pozitie in vectorul nostru
+de replici.
+
+	Functia server_remove o sa scoata elemnteul cu cheia data ca parametru
+de pe hashtabelul primit ca parametru.
+
+	Functia free_server_memory o sa elibereze toata memoria folosita de 
+hashtabelul primit ca parametru.
+
+	 

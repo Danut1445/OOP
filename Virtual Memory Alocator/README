@@ -1,0 +1,56 @@
+#Copyright Tunsoiu Dan-Andrei 315CA 2022-2023
+	Programul incepe cu definirea a trei structuri, prima este nodmini care
+va fi utilizata pentru a retine miniblocurile alocate, dupa aceea este lstmini
+care va retine blocurile alocate si va functiona si pe post de head al listelor
+de miniblocuri, iar ultima este lsblock care va fi headul listei de blocuri.
+	Prima functie definita in program este alloc_arena care va initializa 
+lista de blocuri si va returna un pointer la headul acesteia. Urmatoarea functie
+elibereaza memoria alocata listelor de miniblocuri si a celei de blocuri.
+	Dupa aceea avem 3 functii auxiliare, prima dintre acestea initializeaza
+un block pentru a fi utilizat in rpogram, urmatoarea initilaizeaza un miniblock
+iar cea de a treia, numita interconectare, primeste ca parametru un pointer la
+un block si un pointer la lista de blocuri si verifica daca adresa de final a
+blocului respectiv este egala cu adresa de inceput al urmatorului block din 
+lista, iar daca acest fapt este adevarat atunci va interconecta cele doua 
+blocuri, astfel va rezulta unul singur. O alta functie auxiliara este ceea de
+search care cauta blocul cu ceea mai mare adresa mai mica decat adresa data.
+	Urmatoarea functie este ceea de alloc_miniblock care mai intai va utili-
+za functia de search pentru a gasi ceea ce va deveni predecesorul miniblocului
+pe care dorim sa il alocam. Dupa aceea verificam daca acest bloc este unul exis-
+tent, daca acest lucru nu este adevarat inseamna ca lista noastra de blocuri 
+este goala si va trebui sa facem blocklist->head egal cu blocul nou creeat, dupa
+care vom iesi din functie, altfel verificam daca adresa respectiva este una va-
+lida. Dupa aceea daca adresa finala a blocului gasit de noi anterior este egala
+cu adresa initiala a miniblocului pe care vrem sa il creem atunci nu mai este 
+necesar sa creem un nou block si doar o sa adaugam miniblocul la blocul gasit 
+deja de noi, altfel vom creea un nou bloc in lista de blocuri si vom adauga 
+miniblocul la acesta. Un caz particular este aceela in care adresa de inceput a
+miniblocului este mai mica decat adresa de inceput a blocului gasit de noi ceea
+ce inseamna ca noul bloc va fi primul bloc din lista. Dupa ce am adaugat mini-
+blocul vom folosi functia de interconectare pentru a verifca daca trebuie sa 
+conectam blocul in care ne aflam acuma cu blocul urmator.
+	Free_minibloc va elibera miniblocul de la dresa respectiva. Mai intai va
+gasi blocul care contine miniblocul respectiv, dupa aceea va verifica daca aces-
+ta este primul minibloc din lista, daca este atunci il va elimina si urmatorul
+minibloc va deveni primul din lista, daca nu va parcurge lista din miniblocuri
+pana il gaseste, daca nu este ultimul minibloc din lista atunci va trebui sa 
+sparga lista de blocuri in doua liste noi prima va contine miniblocurile pana 
+la miniblocul eliminat de noi iar ceea de a doua va contine restul de miniblo-
+curi. Daca ajungem la finalul listei atunci vom elimina miniblocul fara a ne 
+complica cu alte operatii.
+	Functia de write va gasi mai inati adresa la care se va face scrierea
+apoi va verifca daca aceasta are permisiunile valide pentru scriere si dupa 
+aceea va scrie cat este posibil la adresa respectiva.
+	Functia de read functioneaza aproape identic cu functia de write prezen-
+tata anterior. 
+	Urmatoarea functie din program este MPROTECT care va seta permisiunile
+pentru un anumit miniblock, aceasta fiind facuta cu operatii pe biti pentru a ne
+asigura ca daca primim comanda PROT_WRITE | PROT_WRITE, permisiunile vor fi 4 si
+nu 8.
+	Functia PMAP o sa parcurga lista de blocuri element cu element, iar 
+pentru fiecare element in parte o sa parcurgem lista de miniblocuri tot element
+cu element si o sa afisam adresa de inceput si de final al acestora.
+	Functia main contine citirea comenzilor si a argumentelor pentru acestea
+iar pentru cazul in care aceasta este WRITE o sa citim carcter cu caracter ceea
+ce trebuie scris, iar daca comanda primita este DEALLOC_ARENA o sa iesim din
+bucla infinita ceea ce o sa duca la terminarea programului.
